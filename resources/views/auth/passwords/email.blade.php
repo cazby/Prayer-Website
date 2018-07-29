@@ -14,6 +14,12 @@
                         </div>
                     @endif
 
+                    @if ($errors->has('confirmation') > 0 )
+                        <div class="alert alert-danger" role="alert">
+                            {!! $errors->first('confirmation') !!}
+                        </div>
+                    @endif
+
                     <form method="POST" action="{{ route('password.email') }}" aria-label="{{ __('Reset Password') }}">
                         @csrf
 

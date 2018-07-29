@@ -8,6 +8,18 @@
                 <div class="card-header">{{ __('Login') }}</div>
 
                 <div class="card-body">
+                    @if (session('confirmation'))
+                        <div class="alert alert-info" role="alert">
+                            {!! session('confirmation') !!}
+                        </div>
+                    @endif
+
+                    @if ($errors->has('confirmation') > 0 )
+                        <div class="alert alert-danger" role="alert">
+                            {!! $errors->first('confirmation') !!}
+                        </div>
+                    @endif
+
                     <form method="POST" action="{{ route('login') }}" aria-label="{{ __('Login') }}">
                         @csrf
 
