@@ -32,4 +32,9 @@ class User extends Authenticatable
     {
         return $this->hasMany(Group::class);
     }
+
+    public function groupInvitesSent()
+    {
+        return $this->hasMany(GroupInvite::class);
+    }
 }

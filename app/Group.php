@@ -23,6 +23,11 @@ class Group extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function invites()
+    {
+        return $this->hasMany(GroupInvite::class);
+    }
+
     public function scopePublic($query)
     {
         return $query->where('private', false);

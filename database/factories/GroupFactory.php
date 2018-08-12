@@ -19,3 +19,16 @@ $factory->state(App\Group::class, 'private', function ($faker) {
         'private' => true
     ];
 });
+
+
+$factory->define(App\GroupInvite::class, function (Faker $faker) {
+    return [
+        'group_id' => function () {
+            return factory(App\Group::class)->create()->id;
+        },
+        'sender_id' => function () {
+            return factory(App\User::class)->create()->id;
+        },
+        'email' => $faker->email
+    ];
+});
