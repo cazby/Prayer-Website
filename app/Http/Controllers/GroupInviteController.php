@@ -7,6 +7,7 @@ use App\Http\Resources\GroupInviteResource;
 use App\GroupInvite;
 use App\Group;
 use Illuminate\Http\Request;
+use App\Events\GroupInviteCreated;
 
 class GroupInviteController extends Controller
 {
@@ -38,6 +39,8 @@ class GroupInviteController extends Controller
 
         $invite->sender_id = $request->user()->id;
         $invite->save();
+
+        event(new GroupInviteCreated($invite));
 
         return new GroupInviteResource($invite);
     }

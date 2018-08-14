@@ -32,3 +32,13 @@ $factory->define(App\GroupInvite::class, function (Faker $faker) {
         'email' => $faker->email
     ];
 });
+
+$factory->state(App\GroupInvite::class, 'matched', function ($foo) {
+    return [
+        'receiver_id' => function ($invite) {
+            return factory(App\User::class)->create([
+                'email' => $invite['email']
+            ])->id;
+        }
+    ];
+});

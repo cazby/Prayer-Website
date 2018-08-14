@@ -35,6 +35,11 @@ class User extends Authenticatable
 
     public function groupInvitesSent()
     {
-        return $this->hasMany(GroupInvite::class);
+        return $this->hasMany(GroupInvite::class, 'sender_id');
+    }
+
+    public function groupInvitesReceived()
+    {
+        return $this->hasMany(GroupInvite::class, 'receiver_id');
     }
 }

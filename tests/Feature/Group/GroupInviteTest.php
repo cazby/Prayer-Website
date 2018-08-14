@@ -7,6 +7,8 @@ use App\GroupInvite;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
+use Illuminate\Support\Facades\Event;
+use App\Events\GroupInviteCreated;
 
 class GroupInviteTest extends TestCase
 {
@@ -42,6 +44,8 @@ class GroupInviteTest extends TestCase
      */
     public function it_should_create_group_invites()
     {
+        Event::fake();
+
         $data = ['email' => $this->faker->email];
 
         $this->actingAs($this->group->user)
@@ -50,6 +54,10 @@ class GroupInviteTest extends TestCase
             ->assertJsonFragment($data);
 
         $this->assertEquals(1, $this->group->invites()->count());
+
+        Event::assertDispatched(GroupInviteCreated::class, function ($e) use ($data) {
+            return $e->invite->email === $data['email'];
+        });
     }
 
     /**
