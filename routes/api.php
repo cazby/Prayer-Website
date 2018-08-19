@@ -17,9 +17,9 @@ Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-Route::resource('groups', 'GroupController', ['except' => ['create', 'edit']]);
 
 Route::middleware('auth:api')->group(function () {
+    Route::resource('groups', 'GroupController', ['except' => ['create', 'edit']]);
     Route::resource('groups.invites', 'GroupInviteController', ['except' => ['create', 'edit', 'update']]);
     Route::get('group_invites/{group_invite}/accept', 'GroupInviteController@accept')->name('group_invites.accept');
 });

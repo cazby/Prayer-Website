@@ -12,21 +12,35 @@ class GroupTest extends TestCase
 {
     use WithFaker, RefreshDatabase;
 
+    public $user;
+
+    public function setUp()
+    {
+        parent::setUp();
+        $this->user = factory(User::class)->create();
+    }
+
     public function test_it_should_list_groups()
     {
-        $count = factory(Group::class, $this->faker->numberBetween(1, 3))->create()->count();
+        $count = factory(Group::class, $this->faker->numberBetween(1, 3))->create([
+            'user_id' => $this->user->id
+        ])->count();
 
-        $response = $this->json('get', route('groups.index'))
+        $response = $this
+            ->actingAs($this->user, 'api')
+            ->json('get', route('groups.index'))
             ->assertStatus(200)
             ->assertJsonCount($count, 'data');
     }
 
     public function test_it_should_not_list_private_groups()
     {
-        factory(Group::class)->create();
+        $this->user->groups()->save(factory(Group::class)->make());
         factory(Group::class)->state('private')->create();
 
-        $this->json('get', route('groups.index'))
+        $this
+            ->actingAs($this->user, 'api')
+            ->json('get', route('groups.index'))
             ->assertStatus(200)
             ->assertJsonCount(1, 'data')
             ->assertJsonFragment(['id' => 1])
@@ -35,8 +49,6 @@ class GroupTest extends TestCase
 
     public function test_it_should_create_groups()
     {
-        $user = factory(User::class)->create();
-
         $data = [
             'name'        => $this->faker->name,
             'description' => $this->faker->sentence,
@@ -44,19 +56,20 @@ class GroupTest extends TestCase
             'private'     => false,
         ];
 
-        $this->actingAs($user)
+        $this
+            ->actingAs($this->user, 'api')
             ->json('post', route('groups.store'), $data)
             ->assertStatus(201)
             ->assertJson(['data' => $data]);
 
-        $this->assertEquals(1, $user->groups()->where($data)->count());
+        $this->assertEquals(1, $this->user->groups()->where($data)->count());
     }
 
     public function test_it_should_show_groups()
     {
-        $group = factory(Group::class)->create();
+        $group = $this->user->groups()->save(factory(Group::class)->make());
 
-        $this->actingAs($group->user)
+        $this->actingAs($group->user, 'api')
             ->json('get', route('groups.show', $group))
             ->assertStatus(200)
             ->assertJson(['data' => $group->only('id')]);
@@ -64,7 +77,7 @@ class GroupTest extends TestCase
 
     public function test_it_should_update_groups()
     {
-        $group = factory(Group::class)->create();
+        $group = $this->user->groups()->save(factory(Group::class)->make());
 
         $data = [
             'name'        => '--name--',
@@ -73,7 +86,7 @@ class GroupTest extends TestCase
             'private'     => true,
         ];
 
-        $this->actingAs($group->user)
+        $this->actingAs($group->user, 'api')
             ->json('put', route('groups.update', $group), $data)
             ->assertStatus(200)
             ->assertJson(['data' => $data]);
@@ -81,9 +94,9 @@ class GroupTest extends TestCase
 
     public function test_it_should_delete_groups()
     {
-        $group = factory(Group::class)->create();
+        $group = $this->user->groups()->save(factory(Group::class)->make());
 
-        $this->actingAs($group->user)
+        $this->actingAs($group->user, 'api')
             ->json('delete', route('groups.destroy', $group))
             ->assertStatus(204);
 

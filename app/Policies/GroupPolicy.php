@@ -47,7 +47,7 @@ class GroupPolicy
      */
     public function update(User $user, Group $group)
     {
-        return $user->id === $group->user_id;
+        return $this->delete($user, $group);
     }
 
     /**
@@ -60,11 +60,11 @@ class GroupPolicy
      */
     public function delete(User $user, Group $group)
     {
-        return $this->update($user, $group);
+        return $user->is($group->user);
     }
 
     public function invite(User $user, Group $group)
     {
-        return $user->is($group->user);
+        return $this->delete($user, $group);
     }
 }
