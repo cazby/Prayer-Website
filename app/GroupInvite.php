@@ -13,6 +13,10 @@ class GroupInvite extends Model
         'email'
     ];
 
+    public $dates = [
+        'accepted_at'
+    ];
+
     public function group()
     {
         return $this->belongsTo(Group::class);
@@ -26,5 +30,13 @@ class GroupInvite extends Model
     public function receiver()
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function accept()
+    {
+        $this->accepted_at = now();
+        $this->save();
+
+        $this->group->users()->attach($this->receiver);
     }
 }

@@ -62,4 +62,9 @@ class GroupPolicy
     {
         return $this->update($user, $group);
     }
+
+    public function invite(User $user, Group $group)
+    {
+        return $user->is($group->user);
+    }
 }

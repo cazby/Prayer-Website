@@ -23,6 +23,11 @@ class Group extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function users()
+    {
+        return $this->belongsToMany(User::class)->using(GroupUser::class)->withTimestamps();
+    }
+
     public function invites()
     {
         return $this->hasMany(GroupInvite::class);

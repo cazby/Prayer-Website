@@ -19,6 +19,7 @@ class CreateGroupInvitesTable extends Migration
             $table->integer('sender_id')->unsigned();
             $table->integer('receiver_id')->unsigned()->nullable();
             $table->string('email');
+            $table->timestamp('accepted_at')->nullable();
             $table->timestamps();
 
             $table

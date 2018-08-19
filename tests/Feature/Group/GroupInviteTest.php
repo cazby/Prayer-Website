@@ -9,6 +9,7 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 use Illuminate\Support\Facades\Event;
 use App\Events\GroupInviteCreated;
+use App\Events\GroupInviteAccepted;
 
 class GroupInviteTest extends TestCase
 {
@@ -33,7 +34,7 @@ class GroupInviteTest extends TestCase
             'sender_id' => $this->group->user->id,
         ]);
 
-        $this->actingAs($this->group->user)
+        $this->actingAs($this->group->user, 'api')
             ->json('get', route('groups.invites.index', $this->group))
             ->assertStatus(200)
             ->assertJsonFragment(['email' => $invite->email]);
@@ -48,7 +49,7 @@ class GroupInviteTest extends TestCase
 
         $data = ['email' => $this->faker->email];
 
-        $this->actingAs($this->group->user)
+        $this->actingAs($this->group->user, 'api')
             ->json('post', route('groups.invites.store', $this->group), $data)
             ->assertStatus(201)
             ->assertJsonFragment($data);
@@ -67,7 +68,20 @@ class GroupInviteTest extends TestCase
     {
         $invite = factory(GroupInvite::class)->create(['group_id' => $this->group->id]);
 
-        $this->actingAs($this->group->user)
+        $this->actingAs($invite->sender, 'api')
+            ->json('get', route('groups.invites.show', [$this->group, $invite]))
+            ->assertStatus(200)
+            ->assertJsonFragment(['email' => $invite->email]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_should_allow_group_owner_to_view_invites_created_by_others()
+    {
+        $invite = factory(GroupInvite::class)->create(['group_id' => $this->group->id]);
+
+        $this->actingAs($this->group->user, 'api')
             ->json('get', route('groups.invites.show', [$this->group, $invite]))
             ->assertStatus(200)
             ->assertJsonFragment(['email' => $invite->email]);
@@ -80,10 +94,47 @@ class GroupInviteTest extends TestCase
     {
         $invite = factory(GroupInvite::class)->create(['group_id' => $this->group->id]);
 
-        $this->actingAs($this->group->user)
+        $this->actingAs($invite->sender, 'api')
             ->json('delete', route('groups.invites.destroy', [$this->group, $invite]))
             ->assertStatus(204);
 
-        $this->assertEquals(0, $this->group->invites()->count());
+        $this->assertDatabaseMissing('group_invites', ['id' => $invite->id]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_should_allow_group_owner_to_delete_invites_created_by_others()
+    {
+        $invite = factory(GroupInvite::class)->create(['group_id' => $this->group->id]);
+
+        $this->actingAs($this->group->user, 'api')
+            ->json('delete', route('groups.invites.destroy', [$this->group, $invite]))
+            ->assertStatus(204);
+
+        $this->assertDatabaseMissing('group_invites', ['id' => $invite->id]);
+    }
+
+    /**
+     * @test
+     */
+    public function it_should_accept_group_invites()
+    {
+        Event::fake();
+
+        $invite = factory(GroupInvite::class)
+            ->states('matched')
+            ->create(['group_id' => $this->group->id]);
+
+        $this->actingAs($invite->receiver, 'api')
+            ->json('get', route('group_invites.accept', $invite))
+            ->assertStatus(200);
+
+        Event::assertDispatched(GroupInviteAccepted::class);
+
+        $this->assertDatabaseHas('group_user', [
+            'group_id' => $invite->group_id,
+            'user_id' => $invite->receiver_id
+        ]);
     }
 }
